@@ -1,0 +1,256 @@
+# To avoid unnecessary file pre-processing and modifications,
+include
+# COMMAND FILE at the top of your session file.
+# If it is not included, the file is assumed to be older and will
+be
+# modified for backward compatibility.
+COMMAND FILE:
+ CFX Post Version = 19.5
+END
+>setPreferences Preferred Units System = SI
+
+> turbo init
+> turbo more_vars
+
+# Define and assign the current case name extracted from "DATA READER" with "Active Case Name" as a key.
+# Remove "Case " from the obtained value and store it in $currentCaseName.
+
+!my $currentCaseName= (getValue("DATA READER","Active Case Name")=~s/Case //gr);
+
+# Extract domain names associated with the current case from the children of "Case $currentCaseName" with "DOMAIN" as a key.
+# Split the obtained string by comma (,) and store it as an array in @DomainNames_list.
+
+!my @DomainNames_list = split(/,/, (getChildren("Case $currentCaseName", "DOMAIN")=~ s/DOMAIN://gr));
+
+# Extract components to initialize for each domain name obtained in @DomainNames_list.
+# Remove "Component " from each obtained value and store it in @Component_Row_list.
+
+!my @Component_Row_list = map {s/Component //gr } map {getValue($_, "Components to Initialize") } @DomainNames_list;
+
+# Create a list of domain names and associated component rows sorted by component row values.
+# Each element of the list is an array reference containing domain name and associated component row.
+!my @Domain_Names_Row_Dict = sort {$a->[1] <=> $b->[1]} map{[$DomainNames_list[$_], $Component_Row_list[$_]]} 0 .. $#DomainNames_list;
+
+# Define the location values for inlet and outlet
+!my $Location_Inlet = 0.03;
+!my $Location_Outlet = 0.86;
+
+# Create an array of plane names by mapping each domain name to "Inlet" and "Outlet" suffixes
+!my @Plane_List = map { ( $_->[0]." Inlet", $_->[0]." Outlet" ) }@Domain_Names_Row_Dict;
+
+!my @Streamwise_Location_List =();
+
+!if(!@Streamwise_Location_List) {
+	# Create an array of streamwise locations by mapping each domain name's position to adjusted inlet and outlet positions
+	!@Streamwise_Location_List = map { ($_->[1] - 1 + $Location_Inlet, $_->[1] - 1 + $Location_Outlet)}@Domain_Names_Row_Dict;
+!}
+
+!my $Workingdictory = (split/\.res/, getValue("DATA READER","Current Results File"), 2)[0];
+
+# This is a Perl code snippet iterating through each element in the Plane_List array
+!foreach my $i(0..$#Plane_List){
+	# This line outputs the TURBO SURFACE label followed by thecurrent element in Plane_List
+	TURBO SURFACE: $Plane_List[$i]
+		Apply Instancing Transform = On
+		Apply Texture = Off
+		Axial Points = 10
+		Blend Texture = On
+		Circumferential Average Mode = None
+		Clip Cone = On
+		Colour = 0.75, 0.75, 0.75
+		Colour Map = Default Colour Map
+		Colour Mode = Constant
+		Colour Scale = Linear
+		Colour Variable = Pressure
+		Colour Variable Boundary Values = Hybrid
+		Culling Mode = No Culling
+		Draw Faces = On
+		Draw Lines = Off
+		Instancing Transform = /DEFAULT INSTANCE TRANSFORM:Default Transform
+		Invert Surface Bound = Off
+		Lighting = On
+		Line Colour = 0, 0, 0
+		Line Colour Mode = Default
+		Line Width = 1
+		Max = 0.0 [bar]
+		Maximum Number of Sampling Points = 20
+		Min = 0.0 [bar]
+		Option = Constant Blade Aligned Linear
+		Point 1 = 0 [m], 0 [m], 0 [m]
+		Point 2 = 1 [m], 0 [m], 0 [m]
+		Point Coord System = Cartesian
+		Radial Points = 10
+		Range = Global
+		Render Edge Angle = 0 [degree]
+		Span = 0.5
+		Span Max = 1.0
+		Span Min = 0.0
+		Span Points = 10
+		Specular Lighting = On
+		# Streamwise Location settings
+		Streamwise Location = $Streamwise_Location_List[$i]
+		Streamwise Max = 1.0
+		Streamwise Min = 0.0
+		Streamwise Points = 10
+		Surface Bound = None
+		Surface Drawing = Smooth Shading
+		Surface Type = Slice
+		Texture Angle = 0
+		Texture Direction = 0 , 1 , 0
+		Texture File =
+		Texture Material = Metal
+		Texture Position = 0 , 0
+		Texture Scale = 1
+		Texture Type = Predefined
+		Theta = 0.0 [degree]
+		Theta Max = 360 [degree]
+		Theta Min = 0 [degree]
+		Theta Points = 10
+		Theta Surface Variable = Theta
+		Tile Texture = Off
+		Transform Texture = Off
+		Transparency = 0.0
+		Turbo Domain List = /DOMAIN GROUP:All Domains
+		Visibility = On
+		OBJECT VIEW TRANSFORM:
+			Apply Reflection = Off
+			Apply Rotation = Off
+			Apply Scale = Off
+			Apply Translation = Off
+			Principal Axis = Z
+			Reflection Plane Option = XY Plane
+			Rotation Angle = 0.0 [degree]
+			Rotation Axis From = 0 [m], 0 [m], 0 [m]
+			Rotation Axis To = 0 [m], 0 [m], 0 [m]
+			Rotation Axis Type = Principal Axis
+			Scale Vector = 1 , 1 , 1
+			Translation Vector = 0 [m], 0 [m], 0 [m]
+			X = 0.0 [m]
+			Y = 0.0 [m]
+			Z = 0.0 [m]
+		END
+	END
+!}
+
+# Declaration of empty hash %values and variableMap
+!my %values;
+!my %variableMap = (
+ !'N' => ["Pressure", "Total Pressure", "Total Pressure", "Total Temperature", "Temperature","Total Enthalpy", "Static Enthalpy", "Specific Volume", "Velocity", "Velocity","Velocity Meridional", "Velocity Circumferential", "Mach Number", "Mach Number", "VelocityFlow Angle", "Velocity in Stn Frame Flow Angle", "Specific Heat Capacity at Constant Pressure", "Specific Heat Capacity at Constant Volume", "sl.Conservative Mass Fraction", "Rotation Velocity"],
+ !'R' => ["Pressure", "Total Pressure in Stn Frame", "Total Pressure in Rel Frame","Total Temperature in Stn Frame", "Temperature", "Total Enthalpy in Stn Frame","Static Enthalpy", "Specific Volume", "Velocity in Stn Frame", "Velocity", "Velocity Meridional", "Velocity in Stn Frame Circumferential","Mach Number in Stn Frame", "Mach Number", "Velocity Flow Angle", "Velocity in Stn Frame Flow Angle", "Specific Heat Capacity at Constant Pressure", "Specific Heat Capacity at Constant Volume", "sl.Conservative Mass Fraction", "Rotation Velocity"]
+!)
+
+# Define the file name including the directory path
+!my $filepath = $Workingdictory."/output.csv";
+
+# Open the file for writing, or die if unsuccessful
+!open(my $fh, '>', $filepath) or die "Cannot open file: $!"; {
+
+	!print $fh "Prameters"; # Writing header for parameters in CSV
+	
+	!foreach my $plane(@Plane_List){ # Looping through plane list
+		!print $fh ",$plane"; # Writing plane names in CSV 
+	!}
+	
+	!print $fh "\n"; # Moving to new line after writing header and plane names
+
+	!for(my $i = 0; $i<scalar(@Plane_List); $i++){ # Looping through plane list indices
+		!my $plane = $Plane_List[$i]; # Getting the current plane
+		
+		# Retrieving appropriate variable array based on the plane type
+		!$variableArray = $plane =~ /^R/? $variableMap{'R'} :
+		$variableMap{'N'} || die "Invalid plane type: $plane";
+		
+		# Extracting Domain from the plane
+		!my $Domain = (split / /, $plane)[0];
+
+		# Processing various data for current plane and storing them in arrays
+		!my @current_values;
+		
+		# Angular Velocity
+		# Extract angular velocities from the specified domain and split the string at '[' character, taking the first part or defaulting to "0" if not found
+		# Push extracted angular velocities into the current values array
+		
+		!my @Angular_Vel = (split /\[/, getValue($Domain, "Angular Velocity"),2)[0]|| "0" ;
+		!push @current_values, @Angular_Vel;	
+		
+		#No of Passages in 360
+		!my @No_Passages = getValue($Domain ,"Number of Passages in 360");
+		!push @current_values, @No_Passages;
+		
+		#Torque
+		# Calling the torque function with the domain concatenated with " Blade" to specify the blade, and passing the principal axis value for the domain.
+		!my @Torque = torque($Domain." Blade", getValue($Domain,"Principal Axis"));
+		!push @current_values, @Torque;
+
+		#Area
+		!my @Area = area("$plane");
+		!push @current_values, @Area;
+		
+		#Mass Flow
+		!my @massFlow = massFlow("$plane");
+		!push @current_values, @massFlow;
+		
+		#Hub Raidus
+		!my @HubRaidus = minVal("Radius","$plane");
+		!push @current_values, @HubRaidus;
+		
+		#Tip Raidus
+		!my @TipRaidus = maxVal("Radius","$plane");
+		!push @current_values, @TipRaidus;
+		
+		#Mach Number
+		!my @MachNumber = maxVal("Mach Number","$plane");
+		!push @current_values, @MachNumber;
+		
+		#Density
+		!my @Density = maxVal("Density", "$plane");
+		!push @current_values, @Density;
+		
+		# Iterating over each variable and calculating its value for the current plane
+		!foreach my $variable (@$variableArray) {
+		!my @variable_value = massFlowAve("$variable", "$plane");
+		
+		!push @current_values, @variable_value;
+		
+		!}
+
+	# Define an array containing parameter names
+	!my @paramater_names = ( "Angular Velocity", "No of Passages in 360", "Torque", "Area", "Mass Flow", "Hub Raidus" , "Tip Radius", "Mach Number", "Density", "Pressure", "Total Pressure", "Total Pressure in Rel Frame", "Total Temperature", "Temperature","Total Enthalpy", "Static Enthalpy", "Specific Volume", "Absolute Velocity", "Relative Velocity", "Meridional Velocity", "Cercumferential Velocity", "Absolute Mach No", "Relative Mach No", "Flow Angle" , "Swirl Angle", "Cp", "Cv", "Wetness", "Rotation Velocity");
+	
+	# Storing the processed values into the hash %values
+	!foreach my $index (0..scalar(@paramater_names)) {
+		!push @{$values{"$paramater_names[$index]"}}, $current_values[$index];
+		!}
+	!}
+
+
+	# Defining the new order for parameter names
+	!my @Paramater_Names_Neworder = ("Angular Velocity", "No of Passages in 360", "Area", "Hub Raidus", "Tip Radius", "Rotation Velocity", "Torque", "Pressure", "Total Pressure", "Total Pressure in Rel Frame", "Total Temperature", "Temperature","Total Enthalpy", "Static Enthalpy", "Wetness", "Mass Flow", "Absolute Velocity", "Relative Velocity", "Meridional Velocity", "Cercumferential Velocity", "Absolute Mach No", "Relative Mach No", "Swirl Angle", "Flow Angle", "Mach Number", "Density", "Specific Volume", "Cp", "Cv");
+
+	# Writing parameter names and their values in the new order to the CSV file
+	!foreach my $Paramater_Names_Neworder (@Paramater_Names_Neworder)
+	!{
+		!print $fh "$Paramater_Names_Neworder";
+		!foreach my $value (@{$values{$Paramater_Names_Neworder}})
+		!{
+			!print $fh ",$value";
+		!}
+		!print $fh "\n";
+	!}
+
+
+	# Printing the current case name to the file handle $fh
+	!print $fh "$currentCaseName\n";
+
+	# Calculating the number of Stage by excluding diffuser domain
+	# If a domain starts with 'D', it's excluded from the count
+	!my $No_of_Domain = (grep { $_ =~ /^D/ } @DomainNames_list) ? (scalar @DomainNames_list - 1)/2 : (scalar @DomainNames_list)/2;
+
+	# Printing the calculated number of Stage to the file handle $fh
+	!print $fh "$No_of_Domain\n";
+
+	# Adding an empty line for readability in the file
+	!print $fh "\n";
+!}
+!close($fh) or die "Cannot close file:$!";
+
