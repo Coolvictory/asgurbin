@@ -1,0 +1,386 @@
+!my @Spanwise =(10,50,90);
+!foreach my $pair (@Domain_Names_Row_Dict) {
+ !my ($domain, $row) = @$pair;
+!next if $domain eq "D"; # Skip if domain name is "D"
+!foreach my $Spanwise(@Spanwise){
+# CCL from Turbo Chart Macro begins (execute)
+> delete Blade Loading Surface, Blade Loading Line,
+Blade Loading Chart
+INTERNAL ISOSURFACE:Blade Loading Surface
+ Domain List = $domain
+ !my $Span = $Spanwise/100;
+ Value = $Span
+ Variable = Span Normalized
+END
+INTERNAL POLYLINE:Blade Loading Line
+ Domain List = $domain
+ Option = Boundary Intersection
+ !$Boundary_List = getValue($domain, "Blade Region");
+ Boundary List = $Boundary_List
+ Location = Blade Loading Surface
+ Line Width = 2
+END
+CHART:Blade Loading Chart
+ Chart Type = XY
+ Chart Title = Blade Loading Chart
+ Chart X Axis Label = Streamwise (0-1)
+ Chart Y Axis Label = Pressure
+ CHART SERIES: Series 1
+Chart Line Custom Data Selection = True
+Chart X Variable = Streamwise (0-1)
+Chart Y Variable = Pressure
+Series Name = Blade Loading Chart Line
+Location = Blade Loading Line
+CHART LINE: Chart Line 1
+ Line Name = Blade Loading Chart Line
+ Chart Line Style = None
+ Auto Chart Line Colour = false
+ Auto Chart Symbol Colour = false
+ Chart Line Colour = 0, 0, 1
+ Chart Symbol Colour = 0, 0, 1
+ Chart Symbol Style = Ellipse
+END
+ END
+END
+EXPORT:
+ !my $Bladepath =
+$Workingdictory."/Plots_Data/".$domain."_".$Spanwise.".csv";
+ Export File = $Bladepath
+ Export Chart Name = Blade Loading Chart
+ Overwrite = On
+ END
+>export chart
+!}
+!}
+# Define variables and their corresponding names
+!my @Row_variables = (["Pressure", "statP"],["Mach Number",
+"mach"],["Total Pressure in Stn Frame", "totP"],["Static Enthalpy",
+"St_Enthalpy"],["Velocity Flow Angle", "flowAng"],["Velocity in Stn
+Frame Flow Angle", "swirl"]);
+!my @Stage_variables = (["Total Enthalpy in Stn Frame",
+"Tot_Enthalpy"],["Total Pressure in Stn Frame", "Tot_Pressure"]);
+!foreach my $pair (@Domain_Names_Row_Dict) {
+!my ($domain, $row) = @$pair;
+!next if $domain eq "D" ; #Skip if Domain is Diffuser
+!my $i = 2 * $row - 2;
+!foreach my $var (@Row_variables) {
+ !my ($var_name, $saved_var_name) = @$var;
+# CCL from Turbo Chart Macro begins (execute)
+> delete Hub to Shroud Surface, Hub to Shroud Line, Hub
+to Shroud Chart
+INTERNAL TURBO LINE:Hub to Shroud Line 1
+ Turbo Domain List = /DOMAIN GROUP:All Domains
+ Option = Hub to Shroud
+ Streamwise Location = $Streamwise_Location_List[$i]
+ Span = 0.5
+ Span Points = 101
+ Streamwise Points = 10
+ Theta Points = 10
+ Point Distribution Method = Equal Distance
+ Include Boundary Points = On
+ Reduction or Max Number = Max Number
+ Reduction Factor = 1.0
+ Maximum Number of Items = 10
+ Turbo Line Mode= Blade Aligned Linear
+ Point Type = AR
+ Point 1 = 0 [m], 0 [m]
+ Point 2 = 1 [m], 0 [m]
+ Position 1 = 0.5
+ Position 2 = 0.5
+ Colour Mode = Variable
+ Colour Variable = Span Normalized
+ Circumferential Average Mode = None
+ Maximum Number of Sampling Points = 20
+ Line Width = 2
+END
+INTERNAL TURBO LINE:Hub to Shroud Line 1
+ Colour Variable = $var_nam
+ Circumferential Average Mode = Area
+ Maximum Number of Sampling Points = 20
+END
+INTERNAL TURBO LINE:Hub to Shroud Line 2
+ Turbo Domain List = /DOMAIN GROUP:All Domains
+ Option = Hub to Shroud
+ Streamwise Location = $Streamwise_Location_List[$i+1]
+ Span = 0.5
+ Span Points = 101
+ Streamwise Points = 10
+ Theta Points = 10
+ Point Distribution Method = Equal Distance
+ Include Boundary Points = On
+ Reduction or Max Number = Max Number
+ Reduction Factor = 1.0
+ Maximum Number of Items = 10
+ Turbo Line Mode= Blade Aligned Linear
+ Point Type = AR
+ Point 1 = 0 [m], 0 [m]
+ Point 2 = 1 [m], 0 [m]
+ Position 1 = 0.5
+ Position 2 = 0.5
+ Colour Mode = Variable
+ Colour Variable = Span Normalized
+ Circumferential Average Mode = None
+ Maximum Number of Sampling Points = 20
+ Line Width = 2
+END
+INTERNAL TURBO LINE:Hub to Shroud Line 2
+ Colour Variable = $var_name
+ Circumferential Average Mode = Area
+ Maximum Number of Sampling Points = 20
+END
+CHART:Hub to Shroud Chart
+ Chart Type = XY
+ Chart Title = Hub to Shroud Chart
+ Chart X Axis Label = (Area Average)
+ Chart Y Axis Label = Span Normalized
+ CHART SERIES: Series 1
+Chart Line Custom Data Selection = True
+Chart X Variable = $var_name ACA on Hub to Shroud
+Line 1
+Chart Y Variable = Span Normalized
+Series Name = Hub to Shroud Chart Line 1
+Location = Hub to Shroud Line 1
+CHART LINE: Chart Line 1
+ Line Name = Hub to Shroud Chart Line 1
+ Chart Line Style = Solid
+ Auto Chart Line Colour = false
+ Chart Line Colour = 0, 0, 1
+ Chart Symbol Colour = 0, 0, 1
+ Chart Symbol Style = Ellipse
+END
+ END
+ CHART SERIES: Series 2
+Chart Line Custom Data Selection = True
+Chart X Variable = $var_name ACA on Hub to Shroud
+Line 2
+Chart Y Variable = Span Normalized
+Series Name = Hub to Shroud Chart Line 2
+Location = Hub to Shroud Line 2
+CHART LINE: Chart Line 1
+ Line Name = Hub to Shroud Chart Line 2
+ Chart Line Style = Solid
+ Auto Chart Line Colour = false
+ Chart Line Colour = 0, 1, 0
+ Chart Symbol Colour = 0, 1, 0
+ Chart Symbol Style = Rectangle
+END
+ END
+END
+# CCL from Turbo Chart Macro ends (execute)
+TURBO PLOTS: Hub to Shroud Chart State
+ Turbo HS Chart Plot Type = Two Lines
+ Turbo HS Chart Display Option = Separate Lines
+ Turbo HS Chart Compare Axis Option = X
+END
+!my $EXPORT_file = $Workingdictory
+."/Plots_Data/".$domain."_".$saved_var_name.".csv";
+# CCL from EXPORT Turbo Chart Macro
+EXPORT:
+ Export File = $EXPORT_file
+ Export Chart Name = Hub to Shroud Chart
+ Overwrite = On
+END
+>export chart
+# CCL from Turbo Chart Macro begins (execute)
+> delete Hub to Shroud Surface, Hub to Shroud Line, Hub
+to Shroud Chart
+!}
+!if ($domain =~/^R/){
+# CCL from Turbo Chart Macro begins (execute)
+> delete Hub to Shroud Surface, Hub to Shroud Line, Hub
+to Shroud Chart
+INTERNAL TURBO LINE:Hub to Shroud Line
+ Turbo Domain List = /DOMAIN GROUP:All Domains
+ Option = Hub to Shroud
+ Streamwise Location = $Streamwise_Location_List[$i +
+1]
+ Span = 0.5
+ Span Points = 101
+ Streamwise Points = 10
+ Theta Points = 10
+ Point Distribution Method = Equal Distance
+ Include Boundary Points = On
+ Reduction or Max Number = Max Number
+ Reduction Factor = 1.0
+ Maximum Number of Items = 10
+ Turbo Line Mode= Blade Aligned Linear
+ Point Type = AR
+ Point 1 = 0 [m], 0 [m]
+ Point 2 = 1 [m], 0 [m]
+ Position 1 = 0.5
+ Position 2 = 0.5
+ Colour Mode = Variable
+ Colour Variable = Span Normalized
+ Circumferential Average Mode = None
+ Maximum Number of Sampling Points = 20
+ Line Width = 2
+END
+INTERNAL TURBO LINE:Hub to Shroud Line
+ Colour Variable = Radius
+ Circumferential Average Mode = Area
+ Maximum Number of Sampling Points = 20
+END
+CHART:Hub to Shroud Chart
+ Chart Type = XY
+ Chart Title = Hub to Shroud Chart
+ Chart X Axis Label = (Area Average)
+ Chart Y Axis Label = Span Normalized
+ CHART SERIES: Series 1
+Chart Line Custom Data Selection = True
+Chart X Variable = Radius ACA on Hub to Shroud
+Line
+Chart Y Variable = Span Normalized
+Series Name = Hub to Shroud Chart Line
+Location = Hub to Shroud Line
+CHART LINE: Chart Line 1
+ Line Name = Hub to Shroud Chart Line
+ Chart Line Style = Solid
+ Auto Chart Line Colour = false
+ Chart Line Colour = 0, 0, 1
+ Chart Symbol Colour = 0, 0, 1
+ Chart Symbol Style = Ellipse
+END
+ END
+END
+# CCL from Turbo Chart Macro ends (execute)
+TURBO PLOTS: Hub to Shroud Chart State
+ Turbo HS Chart Plot Type = Single Line
+ Turbo HS Chart Display Option = Separate Lines
+ Turbo HS Chart Compare Axis Option = X
+END
+!my $EXPORT_file_radius = $Workingdictory
+."/Plots_Data/".$domain."_radius.csv";
+# CCL from EXPORT Turbo Chart Macro
+EXPORT:
+ Export File = $EXPORT_file_radius
+ Export Chart Name = Hub to Shroud Chart
+ Overwrite = On
+END
+>export chart
+!foreach my $stage_var (@Stage_variables) {
+!my ($stage_var_name, $saved_stage_var_name) =
+@$stage_var;
+# CCL from Turbo Chart Macro begins (execute)
+> delete Hub to Shroud Surface, Hub to Shroud
+Line, Hub to Shroud Chart
+INTERNAL TURBO LINE:Hub to Shroud Line 1
+ Turbo Domain List = /DOMAIN GROUP:All Domains
+ Option = Hub to Shroud
+ Streamwise Location =
+$Streamwise_Location_List[$i - 2]
+ Span = 0.5
+ Span Points = 101
+ Streamwise Points = 10
+ Theta Points = 10
+ Point Distribution Method = Equal Distance
+ Include Boundary Points = On
+ Reduction or Max Number = Max Number
+ Reduction Factor = 1.0
+ Maximum Number of Items = 10
+ Turbo Line Mode= Blade Aligned Linear
+ Point Type = AR
+ Point 1 = 0 [m], 0 [m]
+ Point 2 = 1 [m], 0 [m]
+ Position 1 = 0.5
+ Position 2 = 0.5
+ Colour Mode = Variable
+ Colour Variable = Span Normalized
+ Circumferential Average Mode = None
+ Maximum Number of Sampling Points = 20
+ Line Width = 2
+END
+INTERNAL TURBO LINE:Hub to Shroud Line 1
+ Colour Variable = $stage_var_name
+ Circumferential Average Mode = Area
+ Maximum Number of Sampling Points = 20
+END
+INTERNAL TURBO LINE:Hub to Shroud Line 2
+ Turbo Domain List = /DOMAIN GROUP:All Domains
+ Option = Hub to Shroud
+ Streamwise Location =
+$Streamwise_Location_List[$i + 1]
+ Span = 0.5
+ Span Points = 101
+ Streamwise Points = 10
+ Theta Points = 10
+ Point Distribution Method = Equal Distance
+ Include Boundary Points = On
+ Reduction or Max Number = Max Number
+ Reduction Factor = 1.0
+ Maximum Number of Items = 10
+ Turbo Line Mode= Blade Aligned Linear
+ Point Type = AR
+ Point 1 = 0 [m], 0 [m]
+ Point 2 = 1 [m], 0 [m]
+ Position 1 = 0.5
+ Position 2 = 0.5
+ Colour Mode = Variable
+ Colour Variable = Span Normalized
+ Circumferential Average Mode = None
+ Maximum Number of Sampling Points = 20
+ Line Width = 2
+END
+INTERNAL TURBO LINE:Hub to Shroud Line 2
+ Colour Variable = $stage_var_name
+ Circumferential Average Mode = Area
+ Maximum Number of Sampling Points = 20
+END
+CHART:Hub to Shroud Chart
+ Chart Type = XY
+ Chart Title = Hub to Shroud Chart
+ Chart X Axis Label = (Area Average)
+ Chart Y Axis Label = Span Normalized
+ CHART SERIES: Series 1
+Chart Line Custom Data Selection = True
+Chart X Variable = $stage_var_name ACA on
+Hub to Shroud Line \
+1
+Chart Y Variable = Span Normalized
+Series Name = Hub to Shroud Chart Line 1
+Location = Hub to Shroud Line 1
+CHART LINE: Chart Line 1
+ Line Name = Hub to Shroud Chart Line 1
+ Chart Line Style = Solid
+ Auto Chart Line Colour = false
+ Chart Line Colour = 0, 0, 1
+ Chart Symbol Colour = 0, 0, 1
+ Chart Symbol Style = Ellipse
+END
+ END
+ CHART SERIES: Series 2
+Chart Line Custom Data Selection = True
+Chart X Variable = $stage_var_name ACA on
+Hub to Shroud Line \
+2
+Chart Y Variable = Span Normalized
+Series Name = Hub to Shroud Chart Line 2
+Location = Hub to Shroud Line 2
+CHART LINE: Chart Line 1
+ Line Name = Hub to Shroud Chart Line 2
+ Chart Line Style = Solid
+ Auto Chart Line Colour = false
+ Chart Line Colour = 0, 1, 0
+ Chart Symbol Colour = 0, 1, 0
+ Chart Symbol Style = Rectangle
+END
+ END
+END
+# CCL from Turbo Chart Macro ends (execute)
+TURBO PLOTS: Hub to Shroud Chart State
+ Turbo HS Chart Plot Type = Two Lines
+ Turbo HS Chart Display Option = Separate Lines
+ Turbo HS Chart Compare Axis Option = X
+END
+!my $EXPORT_file_stage = $Workingdictory
+."/Plots_Data/S".($domain=~/(\d+)/)[0]."_".$saved_stage_var_name.".
+csv";
+# CCL from EXPORT Turbo Chart Macro
+EXPORT:
+ Export File = $EXPORT_file_stage
+ Export Chart Name = Hub to Shroud Chart
+ Overwrite = On
+END
+>export chart
+!}
+!}
+!
